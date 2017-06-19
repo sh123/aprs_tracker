@@ -23,7 +23,7 @@ Dependencies
 
  * Simple timer - https://github.com/jfturcot/SimpleTimer
  * Rotary - https://github.com/sh123/Rotary 
- * Modifed LibAPRS - https://github.com/sh123/LibAPRS
+ * Modifed LibAPRS (aprs_tracker branch) - https://github.com/sh123/LibAPRS
  * Tiny GPS - https://github.com/mikalhart/TinyGPS
  * Adafruit PCD8544 - https://github.com/adafruit/Adafruit-PCD8544-Nokia-5110-LCD-library
  * Adafruit GFX - https://github.com/adafruit/Adafruit-GFX-Library
