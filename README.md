@@ -1,5 +1,5 @@
 # aprs_tracker
-Standalone Arduino APRS tracker based on modified version of LibAPRS
+Tiny standalone Arduino APRS tracker based on modified version of LibAPRS.
 
 Arduino APRS Tracker
 ====================
@@ -9,18 +9,17 @@ Introduction
 Arudino APRS tracker is based on Arduino UNO with next periherals: 
 
  * Nokia screen, PCD8544
- * Rotary controller
+ * Rotary encoder
  * Micromodem from marqvist - http://unsigned.io/micromodem/
  * GPS receiver, SkyLabs
 
 Requirements
 ------------
- * Minimum: Arduino UNO with 2k SRAM, 32k FLASH (requires libraries manual optimization)
+ * Minimum: Arduino UNO with 2k SRAM, 32k FLASH (requires some manual libraries optimization, such as buffer size decrease)
  * Recommended: Aruduino MEGA with 8k SRAM
 
 Dependencies
 ------------
-
  * Simple timer - https://github.com/jfturcot/SimpleTimer
  * Rotary (rotary_button branch) - https://github.com/sh123/Rotary/tree/rotary_button
  * Modifed LibAPRS (aprs_tracker branch, check device.h for ports usage) - https://github.com/sh123/LibAPRS/tree/aprs_tracker
