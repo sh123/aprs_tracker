@@ -1,9 +1,12 @@
-//#pragma GCC optimize ("-O3")
+//#define SERIAL_TX_BUFFER_SIZE 64
+//#define SERIAL_RX_BUFFER_SIZE 64
 #include <SPI.h>
 #include <EEPROM.h>
 #include <SimpleTimer.h>
 #include <SoftwareSerial.h>
 #include <Rotary.h>
+
+#define USE_COMPRESSION
 #include <LibAPRS.h>
 #include <KISS.h>
 
@@ -38,12 +41,12 @@
 #define UPDATE_HEURISTICS_MAP_SIZE 9
 #define TIMER_DISABLED -1
 
-#define TX_PREAMBLE 500
+#define TX_PREAMBLE 350
 #define TX_TAIL 50
 
 // screen
 #define SCREEN_TIMEOUT 30000UL // 30 seconds
-#define SCREEN_CONTRAST 45
+#define SCREEN_CONTRAST 55
 #define SCREEN_UPDATE_PERIOD 3000  // fow how often to update screen
 #define GPS_UPDATE_PERIOD 3000  // fow how often to update screen
 
@@ -55,9 +58,10 @@
 #define APRS_SYM_JOGGER '['
 
 // aprs ssids
+#define APRS_SSID_GENERIC_2 2
+#define APRS_SSID_GENERIC_3 3
 #define APRS_SSID_WALKIE_TALKIE 7
 #define APRS_SSID_PRIMARY_MOBILE 9
-#define APRS_SSID_INET_ONLY 10
 #define APRS_SSID_ADDITIONAL 15
 
 // aprs config
@@ -167,7 +171,7 @@ char active_heuristic = H_OFF;
 char selected_heuristic = H_OFF;
 
 // buffer for conversions
-#define CONV_BUF_SIZE 20
+#define CONV_BUF_SIZE 15
 static char conv_buf[CONV_BUF_SIZE];
 
 // incoming packet
@@ -198,7 +202,7 @@ void setup() {
 #ifdef USE_KISS
   kiss_init(&AX25, &modem, &Serial, 0);
 #else
-  // hardocded in libaprs to save memory
+  // hardcoded in libaprs to save memory
   //APRS_setCallsign(APRS_MY_CALLSIGN, APRS_MY_SSID);
   //APRS_setDestination("APZMDM", 0);
   //APRS_setPath1("WIDE1", 1);
@@ -239,21 +243,18 @@ void screenOff() {
 void setSymbol(char sym) {
   char ssid = 0;
   switch (sym) {
-    case APRS_SYM_PHONE:
+    case APRS_SYM_JOGGER:
       ssid = APRS_SSID_WALKIE_TALKIE;
       break;
     case APRS_SYM_CAR:
       ssid = APRS_SSID_PRIMARY_MOBILE;
       break;
     case APRS_SYM_BIKE:
-      ssid = APRS_SSID_INET_ONLY;
-      break;
-    case APRS_SYM_JOGGER:
-      ssid = APRS_SSID_ADDITIONAL;
+      ssid = APRS_SSID_GENERIC_3;
       break;
     default:
-      ssid = APRS_SSID_WALKIE_TALKIE;
-      sym = APRS_SYM_PHONE;
+      ssid = APRS_SYM_JOGGER;
+      sym = APRS_SSID_WALKIE_TALKIE;
       break;
   }
   if (ssid != 0) {
@@ -358,34 +359,34 @@ long beacon_rate, secs_since_beacon, turn_time;
 
   if (speed < APRS_SB_LOW_SPEED)
   {
-         beacon_rate = APRS_SB_SLOW_RATE;
+    beacon_rate = APRS_SB_SLOW_RATE;
   }
   else
   {
-      // Adjust beacon rate according to speed
-     if (speed > APRS_SB_HIGH_SPEED)
-     {
-         beacon_rate = APRS_SB_FAST_RATE;
-     }
-     else
-     {
-         beacon_rate = APRS_SB_FAST_RATE * APRS_SB_HIGH_SPEED / speed;
-     }
+    // Adjust beacon rate according to speed
+    if (speed > APRS_SB_HIGH_SPEED)
+    {
+      beacon_rate = APRS_SB_FAST_RATE;
+    }
+    else
+    {
+      beacon_rate = APRS_SB_FAST_RATE * APRS_SB_HIGH_SPEED / speed;
+    }
 
-     // Corner pegging - ALWAYS occurs if not "stopped"
-     // Note turn threshold is speed-dependent
+    // Corner pegging - ALWAYS occurs if not "stopped"
+    // Note turn threshold is speed-dependent
 
-     // what is mph?  
-     float turn_threshold = APRS_SB_TURN_MIN + APRS_SB_TURN_SLOPE / (speed * 2.23693629);
+    // what is mph?  
+    float turn_threshold = APRS_SB_TURN_MIN + APRS_SB_TURN_SLOPE / (speed * 2.23693629);
 
-     if ((heading_change_since_beacon > APRS_SB_TURN_TH) && (secs_since_beacon > turn_time))
-     {
-         secs_since_beacon = beacon_rate;
-     }
+    if ((heading_change_since_beacon > APRS_SB_TURN_TH) && (secs_since_beacon > turn_time))
+    {
+      secs_since_beacon = beacon_rate;
+    }
   }
 
   if (secs_since_beacon > beacon_rate) {
-         send_aprs_update = true;
+    send_aprs_update = true;
   }
 #endif
 }
@@ -593,10 +594,7 @@ char *get_comment() {
   conv_buf[9] = '=';
   // altitude is in feet, feet = cm / 30.48
   sprintf(conv_buf + 10, "%06u", gps.altitude() == TinyGPS::GPS_INVALID_ALTITUDE || gps.altitude() < 0 ? 0 : gps.altitude() / 30);
-  conv_buf[16] = ' ';
-  conv_buf[17] = '8';
-  conv_buf[18] = ')';
-  conv_buf[19] = '\0';
+  conv_buf[16] = '\0';
 #else
   conv_buf[0] = ' ';
   conv_buf[1] = '.';
@@ -637,9 +635,15 @@ bool sendAprsLocationUpdate() {
   {
 #endif
     cnt_tx++;
+#ifdef USE_COMPRESSION
+    char * comment = "";
+    APRS_setLat(((float)lat) / 1000000.0 + 90.0);
+    APRS_setLon(((float)lon) / 1000000.0 + 180.0);
+#else
+    char *comment = get_comment();
     APRS_setLat((char*)deg_to_nmea(lat, true));
     APRS_setLon((char*)deg_to_nmea(lon, false));
-    char *comment = get_comment();
+#endif
     APRS_sendLoc(comment, strlen(comment));
     return true;
 #ifdef USE_GPS
@@ -762,11 +766,8 @@ void selectNextSymbol() {
     case APRS_SYM_BIKE:
       setSymbol(APRS_SYM_JOGGER);
       break;
-    case APRS_SYM_JOGGER:
-      setSymbol(APRS_SYM_PHONE);
-      break;
     default:
-      setSymbol(APRS_SYM_PHONE);
+      setSymbol(APRS_SYM_CAR);
       break;
   }
 }
