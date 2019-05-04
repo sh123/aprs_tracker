@@ -1,5 +1,3 @@
-//#define SERIAL_TX_BUFFER_SIZE 64
-//#define SERIAL_RX_BUFFER_SIZE 64
 #include <SPI.h>
 #include <EEPROM.h>
 #include <SimpleTimer.h>
@@ -24,8 +22,8 @@
 #define USE_PRECISE_DISTANCE
 #define USE_RX_ON_CALLBACK
 #define USE_COMPRESSED_POSITION
-//#define USE_SMART_BEACONING
 //#define USE_SERIAL
+//#define USE_SMART_BEACONING
 //#define USE_KISS
 
 #ifdef USE_KISS
@@ -151,7 +149,6 @@ long lon = 0;
 long lat_prev = 0;
 long lon_prev = 0;
 long distance = 0;
-//long course_prev = 0;
 char cur_symbol;
 
 // counters
@@ -207,9 +204,9 @@ void setup() {
   //APRS_setDestination("APZMDM", 0);
   //APRS_setPath1("WIDE1", 1);
   //APRS_setPath2("WIDE2", 2);
-  APRS_setPreamble(TX_PREAMBLE);
-  APRS_setTail(TX_TAIL);
-  APRS_useAlternateSymbolTable(false);
+  //APRS_setPreamble(TX_PREAMBLE);
+  //APRS_setTail(TX_TAIL);
+  //APRS_useAlternateSymbolTable(false);
   //APRS_setSymbol(APRS_MY_SYMBOL);
   //APRS_printSettings();
   setSymbol(EEPROM[EEPROM_ACTIVE_SYMBOL_IDX]);
@@ -222,7 +219,8 @@ void setup() {
 #endif
 
   // heuristics, load from eeprom
-  activateAprsUpdateHeuristic(EEPROM[EEPROM_ACTIVE_HEURISTIC_IDX] > H_MAX_HEURISTICS ? H_PERIODIC_1MIN : EEPROM[EEPROM_ACTIVE_HEURISTIC_IDX]);
+  activateAprsUpdateHeuristic(EEPROM[EEPROM_ACTIVE_HEURISTIC_IDX] > H_MAX_HEURISTICS ? 
+    H_PERIODIC_1MIN : EEPROM[EEPROM_ACTIVE_HEURISTIC_IDX]);
 
   updateScreenAndGps();
   screen_lights_off_timer_idx = timer.setTimeout(SCREEN_TIMEOUT, screenOff);
@@ -244,10 +242,8 @@ void setSymbol(char sym) {
   char ssid = 0;
   switch (sym) {
     case APRS_SYM_JOGGER:
-      ssid = APRS_SSID_WALKIE_TALKIE;
-      break;
     case APRS_SYM_CAR:
-      ssid = APRS_SSID_PRIMARY_MOBILE;
+      ssid = APRS_SSID_WALKIE_TALKIE;
       break;
     case APRS_SYM_BIKE:
       ssid = APRS_SSID_GENERIC_3;
@@ -345,17 +341,17 @@ void setAprsUpdateFlag() {
 }
 
 /*
-**  Process SmartBeaconing heuristic
+**  TODO, process SmartBeaconing heuristic
 */
 void heuristicProcessSmartBeaconing() {
 #ifdef USE_SMART_BEACONING
 
-// https://github.com/ge0rg/aprsdroid/blob/master/src/location/SmartBeaconing.scala
+  // https://github.com/ge0rg/aprsdroid/blob/master/src/location/SmartBeaconing.scala
 
-float speed = gps.f_speed_kmph();
-float course_prev = gps.course();
-float heading_change_since_beacon = abs(course_prev - gps.course());
-long beacon_rate, secs_since_beacon, turn_time;
+  float speed = gps.f_speed_kmph();
+  float course_prev = gps.course();
+  float heading_change_since_beacon = abs(course_prev - gps.course());
+  long beacon_rate, secs_since_beacon, turn_time;
 
   if (speed < APRS_SB_LOW_SPEED)
   {
@@ -427,12 +423,21 @@ void heuristicDistanceChanged() {
 }
 
 /*
+**  Calculate distance between two coordinates in long format
+*/
+long distanceBetween(long lat1, long long1, long lat2, long long2)
+{
+  return gps.distance_between(((float)lat1)/1000000.0, ((float)long1)/1000000.0, 
+    ((float)lat2)/1000000.0, ((float)long2)/1000000.0);
+}
+
+/*
 **  Update distance and heuristics
 */
 void updateDistance() {
   if (lon_prev != 0 && lat_prev != 0 && lon != 0 && lat != 0) {
 #ifdef USE_GPS
-    distance += gps.distance_between2(lon_prev, lat_prev, lon, lat);
+    distance += distanceBetween(lon_prev, lat_prev, lon, lat);
 #endif
     heuristicDistanceChanged();
   }
@@ -563,10 +568,25 @@ char* deg_to_nmea(long deg, boolean is_lat) {
 
 /*
 **  Convert degrees in long format to APRS compressed format
-**  http://www.aprs.org/doc/APRS101.PDF page 36
+**  http://www.aprs.org/doc/APRS101.PDF, page 36
 */
 char* deg_to_compressed(long deg, boolean is_lat) {
-  conv_buf[0] = '\0';
+  long tmp;
+  if (is_lat) {
+    tmp = ((90000000LL - (long long)deg)) * 1000000LL / 2625182LL;
+  }
+  else {
+    tmp = ((180000000LL + (long long)deg)) * 1000000LL / 5250364LL;
+  }
+  conv_buf[0] = 33 + tmp / (91L * 91L * 91L);
+  tmp = tmp % (91L * 91L * 91L);
+  conv_buf[1] = 33 + tmp / (91L * 91L);
+  tmp = tmp % (91L * 91L);
+  conv_buf[2] = 33 + tmp / 91L;
+  tmp = tmp % 91L;
+  conv_buf[3] = 33 + tmp;
+  conv_buf[4] = '\0';
+  return conv_buf;
 }
 
 /*
@@ -782,7 +802,7 @@ void selectNextSymbol() {
 /*
 **  Long button press
 */
-void onLongBtnPress() {
+void onLongBtnReleased() {
   screenOn();
   send_aprs_update = true;
 }
@@ -818,10 +838,10 @@ bool processRotary() {
     update_screen = true;
     break;
   case BTN_PRESSED_LONG:
-    onLongBtnPress();
-    update_screen = true;
     break;
   case BTN_RELEASED_LONG:
+    onLongBtnReleased();
+    update_screen = true;
     break;
   default:
     break;
