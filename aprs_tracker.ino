@@ -6,7 +6,6 @@
 #include <SoftwareSerial.h>
 #include <Rotary.h>
 
-#define USE_COMPRESSION
 #include <LibAPRS.h>
 #include <KISS.h>
 
@@ -24,6 +23,7 @@
 #define USE_GPS
 #define USE_PRECISE_DISTANCE
 #define USE_RX_ON_CALLBACK
+#define USE_COMPRESSED_POSITION
 //#define USE_SMART_BEACONING
 //#define USE_SERIAL
 //#define USE_KISS
@@ -46,7 +46,7 @@
 
 // screen
 #define SCREEN_TIMEOUT 30000UL // 30 seconds
-#define SCREEN_CONTRAST 55
+#define SCREEN_CONTRAST 40
 #define SCREEN_UPDATE_PERIOD 3000  // fow how often to update screen
 #define GPS_UPDATE_PERIOD 3000  // fow how often to update screen
 
@@ -562,12 +562,20 @@ char* deg_to_nmea(long deg, boolean is_lat) {
 }
 
 /*
+**  Convert degrees in long format to APRS compressed format
+**  http://www.aprs.org/doc/APRS101.PDF page 36
+*/
+char* deg_to_compressed(long deg, boolean is_lat) {
+  conv_buf[0] = '\0';
+}
+
+/*
 **  Convert latidude and longitude to QTH maidenhead locator
 */
 char *deg_to_qth(long lat, long lon) {
   // https://en.wikipedia.org/wiki/Maidenhead_Locator_System
-  float lon_ = ((float)lon) / 1000000.0 + 180.0;
   float lat_ = ((float)lat) / 1000000.0 + 90.0;
+  float lon_ = ((float)lon) / 1000000.0 + 180.0;
   conv_buf[0] = 'A' + int(lon_ / 20.0);
   conv_buf[1] = 'A' + int(lat_ / 10.0);
   conv_buf[2] = '0' + int(fmod(lon_, 20) / 2.0);
@@ -635,15 +643,14 @@ bool sendAprsLocationUpdate() {
   {
 #endif
     cnt_tx++;
-#ifdef USE_COMPRESSION
-    char * comment = "";
-    APRS_setLat(((float)lat) / 1000000.0 + 90.0);
-    APRS_setLon(((float)lon) / 1000000.0 + 180.0);
+#ifdef USE_COMPRESSED_POSITION
+    APRS_setLat((char*)deg_to_compressed(lat, true));
+    APRS_setLon((char*)deg_to_compressed(lon, false));
 #else
-    char *comment = get_comment();
     APRS_setLat((char*)deg_to_nmea(lat, true));
     APRS_setLon((char*)deg_to_nmea(lon, false));
 #endif
+    char * comment = "";  // get_comment()
     APRS_sendLoc(comment, strlen(comment));
     return true;
 #ifdef USE_GPS
