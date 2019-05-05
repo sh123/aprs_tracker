@@ -3,6 +3,7 @@ Standalone Arduino APRS tracker based on modified version of LibAPRS
 
 Arduino APRS Tracker
 ====================
+![alt text](http://i60.tinypic.com/23h2hd1.jpg)
 
 Introduction
 ------------
