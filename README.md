@@ -9,15 +9,15 @@ Introduction
 ------------
 Arudino APRS tracker is based on Arduino UNO with next periherals: 
 
- * Nokia screen, PCD8544
- * Rotary encoder
+ * Nokia screen, PCD8544 - https://www.sparkfun.com/datasheets/LCD/Monochrome/Nokia5110.pdf
+ * Rotary encoder - https://www.sparkfun.com/products/15140
  * Micromodem from marqvist - http://unsigned.io/micromodem/
- * GPS receiver, SkyLabs
+ * GPS receiver, SkyLabs SKM53 - http://www.skylabmodule.com/gpsmodule-antenna-skm53/
 
 Requirements
 ------------
  * Minimum: Arduino UNO with 2k SRAM, 32k FLASH
-   * requires some manual libraries optimization, such as buffer size decrease
+   * may require some manual libraries optimization, such as buffer size decrease
    * or different screen, PCD8544 requires 500 bytes of RAM for the buffer
  * Recommended: Arduino MEGA with 8k SRAM
    * NB! needs some tweaks in LibAPRS internals
