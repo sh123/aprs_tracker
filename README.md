@@ -30,3 +30,9 @@ Dependencies
  * Tiny GPS - https://github.com/mikalhart/TinyGPS
  * Adafruit PCD8544 - https://github.com/adafruit/Adafruit-PCD8544-Nokia-5110-LCD-library
  * Adafruit GFX - https://github.com/adafruit/Adafruit-GFX-Library
+
+Supported operations
+--------------------
+ * Rotary encoder rotation iterates over transmit heuristics selection, such as periodic transmit every 1 minute, 2 minutes, range based  transmit
+ * Short encoder release activates current heuristic if it is different from the current one or iterates over different APRS SSIDs
+ * Long encoder release forces current position to be sent out
