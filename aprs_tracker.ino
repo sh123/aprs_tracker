@@ -32,13 +32,11 @@
 #endif
 
 // common
-#define ADC_REFERENCE REF_5V // _3V3
+#define ADC_REFERENCE REF_5V // or _3V3
 #define OPEN_SQUELCH false
-
 #define GPS_POLL_DURATION_MS 1000 // for how long to poll gps
 #define UPDATE_HEURISTICS_MAP_SIZE 9
 #define TIMER_DISABLED -1
-
 #define TX_PREAMBLE 350
 #define TX_TAIL 50
 
@@ -46,7 +44,7 @@
 #define SCREEN_TIMEOUT 30000UL // 30 seconds
 #define SCREEN_CONTRAST 40
 #define SCREEN_UPDATE_PERIOD 3000  // fow how often to update screen
-#define GPS_UPDATE_PERIOD 3000  // fow how often to update screen
+#define GPS_UPDATE_PERIOD 3000  // fow how often to read gps data
 
 // aprs symbols
 #define APRS_SYM_PHONE '$'
@@ -200,7 +198,6 @@ void setup() {
   kiss_init(&AX25, &modem, &Serial, 0);
 #else
   // hardcoded in libaprs to save memory
-  //APRS_setCallsign(APRS_MY_CALLSIGN, APRS_MY_SSID);
   //APRS_setDestination("APZMDM", 0);
   //APRS_setPath1("WIDE1", 1);
   //APRS_setPath2("WIDE2", 2);
