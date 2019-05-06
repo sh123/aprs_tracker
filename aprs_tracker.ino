@@ -24,7 +24,7 @@
 #define USE_COMPRESSED_POSITION
 //#define USE_SERIAL
 //#define USE_SMART_BEACONING
-//#define USE_KISS
+//#define USE_KISS  // disables tracker, enables kiss serial modem mode
 
 #ifdef USE_KISS
   #undef USE_SCREEN
