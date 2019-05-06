@@ -1,5 +1,5 @@
 # aprs_tracker
-Tiny standalone Arduino APRS tracker based on modified version of LibAPRS.
+Tiny single sketch Arduino APRS tracker based on modified version of LibAPRS.
 
 Arduino APRS Tracker
 ====================
@@ -16,8 +16,11 @@ Arudino APRS tracker is based on Arduino UNO with next periherals:
 
 Requirements
 ------------
- * Minimum: Arduino UNO with 2k SRAM, 32k FLASH (requires some manual libraries optimization, such as buffer size decrease)
+ * Minimum: Arduino UNO with 2k SRAM, 32k FLASH
+   * requires some manual libraries optimization, such as buffer size decrease
+   * or different screen, PCD8544 requires 500 bytes of RAM for the buffer
  * Recommended: Aruduino MEGA with 8k SRAM
+   * needs some tweaks in LibAPRS internals
 
 Dependencies
 ------------
