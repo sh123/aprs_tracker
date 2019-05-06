@@ -19,8 +19,8 @@ Requirements
  * Minimum: Arduino UNO with 2k SRAM, 32k FLASH
    * requires some manual libraries optimization, such as buffer size decrease
    * or different screen, PCD8544 requires 500 bytes of RAM for the buffer
- * Recommended: Aruduino MEGA with 8k SRAM
-   * needs some tweaks in LibAPRS internals
+ * Recommended: Arduino MEGA with 8k SRAM
+   * NB! needs some tweaks in LibAPRS internals
 
 Dependencies
 ------------
