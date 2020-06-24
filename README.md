@@ -3,7 +3,6 @@ Tiny standalone single sketch Arduino APRS tracker based on modified version of 
 
 Arduino APRS Tracker
 ====================
-![alt text](http://i60.tinypic.com/23h2hd1.jpg)
 
 Introduction
 ------------
